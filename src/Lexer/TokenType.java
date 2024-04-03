@@ -9,6 +9,10 @@ public enum TokenType {
     STRING_LITERAL,
     OPERATOR,
     DELIMITER,
+    NEWLINE,
+    CONCATENATOR,
+    L_ESCAPE,
+    R_ESCAPE,
     COMMENT,
     EOF_TOKEN
 }

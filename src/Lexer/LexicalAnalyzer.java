@@ -15,6 +15,17 @@ public class LexicalAnalyzer {
         return keywords.contains(word);
     }
 
+    private static boolean isDigit(String str) {
+        for (int i = 0; i < str.length(); i++) {
+            // Check if the current character matches the target letter
+            if (!Character.isDigit(str.charAt(i))) {
+
+                return false; // If found, exit the loop
+            }
+        }
+        return true;
+    }
+
     // Lexer function to tokenize the input code
     public static List<Token> tokenize(String code) {
         List<Token> tokens = new ArrayList<>();
@@ -38,10 +49,17 @@ public class LexicalAnalyzer {
 
             if (Character.isWhitespace(c)) {
                 if (token.length() > 0) {
+
                     if (isKeyword(token.toString())) {
                         tokens.add(new Token(TokenType.KEYWORD, token.toString()));
+                    } else if(isDigit(token.toString())) {
+                        tokens.add(new Token(TokenType.NUMBER, token.toString()));
                     } else {
-                        tokens.add(new Token(TokenType.IDENTIFIER, token.toString()));
+                        if(token.toString().equals("TRUE") || token.toString().equals("FALSE")) {
+                            tokens.add(new Token(TokenType.BOOL_LITERAL, token.toString()));
+                        }else {
+                            tokens.add(new Token(TokenType.IDENTIFIER, token.toString()));
+                        }
                     }
                     token.setLength(0);
                 }
@@ -50,21 +68,23 @@ public class LexicalAnalyzer {
                     tokens.add(new Token(TokenType.STRING_LITERAL, token.toString()));
                     token.setLength(0);
                 }
-                tokens.add(new Token(TokenType.DELIMITER, "$"));
+                tokens.add(new Token(TokenType.NEWLINE, "$"));
             } else if (c == '&') {
                 if (token.length() > 0) {
                     tokens.add(new Token(TokenType.STRING_LITERAL, token.toString()));
                     token.setLength(0);
                 }
-                tokens.add(new Token(TokenType.DELIMITER, "&"));
+                tokens.add(new Token(TokenType.CONCATENATOR, "&"));
             } else if (c == '[') {
                 if (token.length() > 0) {
                     tokens.add(new Token(TokenType.STRING_LITERAL, token.toString()));
                     token.setLength(0);
+                } else {
+                    tokens.add(new Token(TokenType.L_ESCAPE, "["));
                 }
-                StringBuilder escapeCode = new StringBuilder("[");
+                StringBuilder escapeCode = new StringBuilder();
                 i++;
-                while (i < code.length() && code.charAt(i) != ']') {
+                while (i < code.length() && code.charAt(i+1) == ']') {
                     escapeCode.append(code.charAt(i));
                     i++;
                 }
@@ -72,12 +92,29 @@ public class LexicalAnalyzer {
                     // Error: Missing closing ']'
                     break;
                 }
-                escapeCode.append("]");
                 tokens.add(new Token(TokenType.STRING_LITERAL, escapeCode.toString()));
-            } else if (Character.isLetter(c) || c == '_') {
+            } else if(c == ']') {
+                if (token.length() > 0) {
+                    tokens.add(new Token(TokenType.STRING_LITERAL, token.toString()));
+                    token.setLength(0);
+                } else {
+                    tokens.add(new Token(TokenType.R_ESCAPE, "["));
+                }
+            } else if (Character.isLetter(c) || (Character.compare(c, '_') == 0)) {
+
                 token.append(c);
+                if(i == (code.length() - 1)) {
+//                    tokens.add(new Token(TokenType.EOF_TOKEN, "PROBLEM"));
+                    if (isKeyword(token.toString())) {
+                        tokens.add(new Token(TokenType.KEYWORD, token.toString()));
+                        token.setLength(0);
+                    } else {
+                        //ERRORR
+                    }
+                }
             } else if (Character.isDigit(c)) {
                 token.append(c);
+
             } else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c == '>' || c == '<' || c == '=') {
                 if (token.length() > 0) {
                     tokens.add(new Token(TokenType.STRING_LITERAL, token.toString()));
